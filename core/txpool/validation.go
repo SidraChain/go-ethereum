@@ -23,6 +23,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/contracts"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
@@ -206,6 +207,10 @@ func ValidateTransactionWithState(tx *types.Transaction, signer types.Signer, op
 	next := opts.State.GetNonce(from)
 	if next > tx.Nonce() {
 		return fmt.Errorf("%w: next nonce %v, tx nonce %v", core.ErrNonceTooLow, next, tx.Nonce())
+	}
+	// Ensure the wallet is allowed to send transactions
+	if allowed := contracts.IsTransactionAllowed(tx, &from, opts.State); !allowed {
+		return fmt.Errorf("transaction not allowed: sender %v", from)
 	}
 	// Ensure the transaction doesn't produce a nonce gap in pools that do not
 	// support arbitrary orderings
