@@ -14,8 +14,10 @@ RUN cd /go-ethereum && go run build/ci.go install -static
 # Pull all binaries into a second stage deploy alpine container
 FROM ubuntu:latest
 
-# RUN apk add --no-cache ca-certificates
-RUN apt-get update && apt-get install -y ca-certificates \
+RUN echo 'Etc/UTC' > /etc/timezone && \
+    echo 'TZif2UTCTZif2UTC\nUTC0' > /etc/localtime && \
+    apt-get update && \
+    apt-get install -y ca-certificates ntp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
