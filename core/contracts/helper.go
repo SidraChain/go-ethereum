@@ -126,11 +126,11 @@ func WalletStatus(addr *common.Address, statedb *state.StateDB) *big.Int {
 func IsSystemContract(addr common.Address) bool {
 	return SystemWallets[addr]
 }
-func UnListedOrInBlackList(value *big.Int) bool {
-	return value.Cmp(common.Big0) == 0 || value.Cmp(common.Big2) == 0
+func InBlackList(value *big.Int) bool {
+	return value.Cmp(common.Big2) == 0
 }
-func InWhiteList(value *big.Int) bool {
-	return value.Cmp(common.Big1) == 0
+func InWhiteListOrUnlisted(value *big.Int) bool {
+	return value.Cmp(common.Big0) == 0 || value.Cmp(common.Big1) == 0
 }
 func InGreyList(value *big.Int) bool {
 	// greater than 1
@@ -153,17 +153,17 @@ func IsTransactionAllowed(tx *types.Transaction, sender *common.Address, statedb
 
 	// If the sender is whitelisted and the receiver is nil, return true.
 	// This is to allow the creation of new contracts.
-	if InWhiteList(senderStatus) && recipient == nil {
+	if InWhiteListOrUnlisted(senderStatus) && recipient == nil {
 		// Return true if the sender is whitelisted and the receiver is nil.
 		return true
 	}
 	// Get the state of the receiver.
 	receiverStatus := WalletStatus(recipient, statedb)
-	if InWhiteList(senderStatus) && InWhiteList(receiverStatus) {
+	if InWhiteListOrUnlisted(senderStatus) && InWhiteListOrUnlisted(receiverStatus) {
 		// Return true if both sender and receiver are whitelisted.
 		return true
 	}
-	if UnListedOrInBlackList(senderStatus) || UnListedOrInBlackList(receiverStatus) {
+	if InBlackList(senderStatus) || InBlackList(receiverStatus) {
 		// Return false if either sender or receiver is blacklisted.
 		return false
 	}
