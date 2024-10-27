@@ -23,6 +23,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/contracts"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
@@ -215,6 +216,10 @@ func ValidateTransactionWithState(tx *types.Transaction, signer types.Signer, op
 		if gap := opts.FirstNonceGap(from); gap < tx.Nonce() {
 			return fmt.Errorf("%w: tx nonce %v, gapped nonce %v", core.ErrNonceTooHigh, tx.Nonce(), gap)
 		}
+	}
+	// Ensure the wallet is allowed to send transactions
+	if allowed := contracts.IsTransactionAllowed(tx, &from, opts.State); !allowed {
+		return fmt.Errorf("transaction not allowed: sender %v", from)
 	}
 	// Ensure the transactor has enough funds to cover the transaction costs
 	var (
