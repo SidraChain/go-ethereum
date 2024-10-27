@@ -34,7 +34,6 @@ import (
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
 	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
-	"github.com/ethereum/go-ethereum/core/contracts"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -579,16 +578,10 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 	return nil
 }
 
-// Finalize implements consensus.Engine. It sets the block's final state and
-// assembles the block.
+// Finalize implements consensus.Engine. There is no post-transaction
+// consensus rules in clique, do nothing here.
 func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, withdrawals []*types.Withdrawal) {
-	// Reset the balance of the sidra token contract to the maximum value (unlimited supply)
-	balance := state.GetBalance(contracts.SidraTokenAddr)
-	if balance.Cmp(contracts.Uint256Max) == -1 { // if balance < uint256Max
-		// Reset the balance of the sidra token contract to the maximum value (unlimited supply)
-		balanceDifference := new(big.Int).Sub(contracts.Uint256Max, balance)
-		state.AddBalance(contracts.SidraTokenAddr, balanceDifference)
-	}
+	// No block rewards in PoA, so the state remains as is
 }
 
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set,
