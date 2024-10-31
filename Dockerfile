@@ -19,11 +19,11 @@ RUN cd /go-ethereum && go run build/ci.go install -static
 # Pull all binaries into a second stage deploy alpine container
 FROM alpine:latest
 
-RUN apk add --no-cache ca-certificates bash
+RUN apk add --no-cache ca-certificates
 COPY --from=builder /go-ethereum/build/bin/* /usr/local/bin/
 
 EXPOSE 8545 8546 30303 30303/udp
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "geth" ]
 
 # Add some metadata labels to help programatic image consumption
 ARG COMMIT=""
