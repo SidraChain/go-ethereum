@@ -20,7 +20,10 @@ RUN cd /go-ethereum && go run build/ci.go install -static
 FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates
+RUN addgroup -S node && adduser -S node -G node
 COPY --from=builder /go-ethereum/build/bin/* /usr/local/bin/
+
+USER node
 
 EXPOSE 8545 8546 30303 30303/udp
 ENTRYPOINT [ "geth" ]
