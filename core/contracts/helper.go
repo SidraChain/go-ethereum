@@ -16,8 +16,8 @@ var (
 	WacContractAddr = common.HexToAddress(WacContractAddrHex)
 	// PacContractAddr is the address of the PAC contract
 	PacContractAddr = common.HexToAddress(PacContractAddrHex)
-	// SidraTokenAddr is the address of the Sidra token contract
-	SidraTokenAddr = common.HexToAddress(SidraTokenAddrHex)
+	// RewardDistributorAddr is the address of the Reward Distributor contract
+	RewardDistributorAddr = common.HexToAddress(RewardDistributorAddrHex)
 	// MainFaucetAddr is the address of the main faucet contract
 	MainFaucetAddr = common.HexToAddress(MainFaucetAddrHex)
 	// WaqfAddr is the address of the waqf contract
@@ -26,13 +26,13 @@ var (
 	ZakatAddr = common.HexToAddress(ZakatAddrHex)
 
 	SystemWallets = map[common.Address]bool{
-		OwnerContractAddr: true,
-		WacContractAddr:   true,
-		PacContractAddr:   true,
-		SidraTokenAddr:    true,
-		MainFaucetAddr:    true,
-		WaqfAddr:          true,
-		ZakatAddr:         true,
+		OwnerContractAddr:     true,
+		WacContractAddr:       true,
+		PacContractAddr:       true,
+		RewardDistributorAddr: true,
+		MainFaucetAddr:        true,
+		WaqfAddr:              true,
+		ZakatAddr:             true,
 	}
 )
 
@@ -53,13 +53,11 @@ func ComputeMappingHash(addr *common.Address, slot *big.Int) common.Hash {
 }
 
 func NumOfPoolAtAddr(addr *common.Address, statedb *state.StateDB) (*big.Int, int) {
-	// Get the state of the WalletAccessControl contract.
-	pacState := statedb.GetOrNewStateObject(PacContractAddr)
 	// Calculate the keccak256 hash of the key and slot number.
 	// INFO: The slot number is from storage layout of the PoolAccessControl contract.
 	keyHash := ComputeMappingHash(addr, common.Big1)
 	// Get the value of the key from the state which is length of the array.
-	value := pacState.GetState(keyHash).Big()
+	value := statedb.GetState(PacContractAddr, keyHash).Big()
 	// Calculate the keccak256 hash of the key which is the first element of the array.
 	key := crypto.Keccak256Hash(keyHash.Bytes()).Big()
 	// Return the key and value.
@@ -67,14 +65,11 @@ func NumOfPoolAtAddr(addr *common.Address, statedb *state.StateDB) (*big.Int, in
 }
 
 func GetListOfPoolAtAddr(start *big.Int, value int, statedb *state.StateDB) []big.Int {
-	// Get the state of the WalletAccessControl contract.
-	pacState := statedb.GetOrNewStateObject(PacContractAddr)
-
 	list := make([]big.Int, 0, value)
 	for i := 0; i < value; i++ {
 		key := big.NewInt(0).Add(start, big.NewInt(int64(i)))
 		// Get the value of the key from the state.
-		v := pacState.GetState(common.BigToHash(key)).Big()
+		v := statedb.GetState(PacContractAddr, common.BigToHash(key)).Big()
 		list = append(list, *v)
 	}
 	return list
@@ -110,15 +105,12 @@ func WalletStatus(addr *common.Address, statedb *state.StateDB) *big.Int {
 		// Return 0 if the address is nil.
 		return common.Big0
 	}
-	// Get the state of the WalletAccessControl contract.
-	wacState := statedb.GetOrNewStateObject(WacContractAddr)
-
 	// Calculate the keccak256 hash of the key and slot number.
 	// INFO: The slot number is from storage layout of the WalletAccessControl contract.
 	keyHash := ComputeMappingHash(addr, Big6)
 
 	// Get the value of the key from the state.
-	value := wacState.GetState(keyHash).Big()
+	value := statedb.GetState(WacContractAddr, keyHash).Big()
 
 	return value
 }

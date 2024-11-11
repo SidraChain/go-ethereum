@@ -44,6 +44,7 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/trie"
+	"github.com/holiman/uint256"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -343,7 +344,7 @@ func (c *Clique) verifyCascadingFields(chain consensus.ChainHeaderReader, header
 	if parent == nil || parent.Number.Uint64() != number-1 || parent.Hash() != header.ParentHash {
 		return consensus.ErrUnknownAncestor
 	}
-	if parent.Time+c.config.Period > header.Time {
+	if parent.Time > header.Time {
 		return errInvalidTimestamp
 	}
 	// Verify that the gasUsed is <= gasLimit
@@ -579,15 +580,14 @@ func (c *Clique) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 	return nil
 }
 
-// Finalize implements consensus.Engine. It sets the block's final state and
-// assembles the block.
+// Finalize implements consensus.Engine. There is no post-transaction
+// consensus rules in clique, do nothing here.
 func (c *Clique) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, withdrawals []*types.Withdrawal) {
-	// Reset the balance of the sidra token contract to the maximum value (unlimited supply)
-	balance := state.GetBalance(contracts.SidraTokenAddr)
+	balance := state.GetBalance(contracts.RewardDistributorAddr)
 	if balance.Cmp(contracts.Uint256Max) == -1 { // if balance < uint256Max
-		// Reset the balance of the sidra token contract to the maximum value (unlimited supply)
-		balanceDifference := new(big.Int).Sub(contracts.Uint256Max, balance)
-		state.AddBalance(contracts.SidraTokenAddr, balanceDifference)
+		// Reset the balance of the reward distributor contract to the maximum value (unlimited supply)
+		balanceDifference := new(uint256.Int).Sub(contracts.Uint256Max, balance)
+		state.AddBalance(contracts.RewardDistributorAddr, balanceDifference)
 	}
 }
 
